@@ -40,7 +40,6 @@ def cam_client(url, *, silent=True):
     
 
 def cam_loader(inp, *, resize=None):
-    print(f"resize={resize}")
     for item in inp:
         jpeg = item['jpeg']
         
