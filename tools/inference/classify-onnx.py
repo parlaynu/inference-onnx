@@ -17,14 +17,14 @@ def build_pipeline(session, dataspec, rate, limit):
     print(f"- input shape: {batch_size} {nchans} {height} {width}")
     print(f"- output shape: {session.get_outputs()[0].shape}")
     
-    pipe = ops.datasource(dataspec, silent=True)
+    pipe = ops.datasource(dataspec, resize=(width, height), silent=True)
     if rate > 0:
         pipe = utils.rate_limiter(pipe, rate=rate)
     if limit > 0:
         pipe = utils.limiter(pipe, limit=limit)
     pipe = utils.worker(pipe)
 
-    pipe = imaging.resize(pipe, width=width, height=height)
+    # pipe = imaging.resize(pipe, width=width, height=height)
     pipe = classify.preprocess(pipe)
     pipe = onnx_ops.classify(pipe, session=session)
     pipe = classify.postprocess(pipe)

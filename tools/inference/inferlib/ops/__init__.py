@@ -11,7 +11,7 @@ from .data import dataset, imageloader
 
 camserver_re = re.compile("^(?P<protocol>.+?)://(?P<address>.+?)(:(?P<port>\d+))?$")
 
-def datasource(spec, *, silent=True):
+def datasource(spec, *, resize=None, silent=True):
     
     mo = camserver_re.match(spec)
     
@@ -21,7 +21,7 @@ def datasource(spec, *, silent=True):
             raise ValueError(f"unable to interpret datasource spec: {spec}")
         
         pipe = dataset(spec)
-        pipe = imageloader(pipe)
+        pipe = imageloader(pipe, resize=resize)
             
         return pipe
     
@@ -41,6 +41,6 @@ def datasource(spec, *, silent=True):
             raise ValueError(f"unsupported protocol {protocol} - must be 'tcp' or 'ipc'")
         
         pipe = cam_client(url)
-        pipe = cam_loader(pipe)
+        pipe = cam_loader(pipe, resize=resize)
         
     return pipe

@@ -39,10 +39,17 @@ def cam_client(url, *, silent=True):
         }
     
 
-def cam_loader(inp):
+def cam_loader(inp, *, resize=None):
+    print(f"resize={resize}")
     for item in inp:
         jpeg = item['jpeg']
-        item['image'] = np.array(Image.open(io.BytesIO(jpeg)))
+        
+        image = Image.open(io.BytesIO(jpeg))
+        if resize is not None:
+            image = image.resize(resize)
+        
+        item['image'] = np.array(image)
         item['image_size'] = utils.size_from(item['image'])
+
         yield item
 
