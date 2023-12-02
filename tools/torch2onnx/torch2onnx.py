@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 import argparse
-import os.path
+import os, os.path
+import io
 import re
 import torch
 import torch.nn as nn
 import torchvision
+import onnx
+import onnxsim
 
 
 def parse_cmdline():
     # parse the command line
     parser = argparse.ArgumentParser()
+    parser.add_argument('--simplify', help='simplify the model before saving', action='store_true')
     parser.add_argument('--bsize', help='batch size', type=int, default=1)
     parser.add_argument('--resolution', help='the image resolution for the model: WIDTHxHEIGHT', type=str, default=None)
     parser.add_argument('--channels', help='number of input channels', type=int, default=3)
@@ -49,11 +53,13 @@ def create_model(architecture):
     return model
 
 
-def run_export(outpath, model, inp):
+def run_export(outpath, model, inp, *, simplify=False):
+    
+    onnx_data = io.BytesIO()
     
     with torch.no_grad():
         torch.onnx.export(
-            model, inp, outpath,
+            model, inp, onnx_data,
             input_names=['image'],
             output_names=['preds'],
             opset_version=15,  # need this to run on jetson
@@ -62,6 +68,16 @@ def run_export(outpath, model, inp):
             #     'preds': {0: 'batch'}
             # }
         )
+    
+    onnx_data.seek(0, os.SEEK_SET)
+    onnx_model = onnx.load(onnx_data)
+    
+    if simplify:
+        onnx_model, check = onnxsim.simplify(onnx_model)
+        if check == False:
+            raise ValueError("onnxsim check failed")
+    
+    onnx.save(onnx_model, outpath)
 
 
 def main():
@@ -105,7 +121,7 @@ def main():
     model.to(device=device, dtype=dtype)
     inp = torch.rand((args.bsize, model.in_channels, height, width), device=device, dtype=dtype)
 
-    run_export(outpath, model, inp)
+    run_export(outpath, model, inp, simplify=args.simplify)
 
 
 if __name__ == "__main__" :
