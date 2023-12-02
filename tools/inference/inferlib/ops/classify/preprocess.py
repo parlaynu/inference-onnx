@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def preprocess(pipe, *, mean=[0.485, 0.456, 0.406], stddev=[0.229, 0.224, 0.225]):
+def preprocess(pipe, *, mean=[0.485, 0.456, 0.406], stddev=[0.229, 0.224, 0.225], dtype=np.float32):
     
     mean = np.asarray(mean, dtype=np.float32)
     stddev = np.asarray(stddev, dtype=np.float32)
@@ -12,7 +12,7 @@ def preprocess(pipe, *, mean=[0.485, 0.456, 0.406], stddev=[0.229, 0.224, 0.225]
         image = np.expand_dims(image, axis=0)
         
         # tensorrt needs a contiguous array
-        item['image'] = np.ascontiguousarray(image)
+        item['image'] = np.ascontiguousarray(image, dtype=dtype)
 
         yield item
 

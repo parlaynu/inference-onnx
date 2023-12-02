@@ -14,7 +14,9 @@ def parse_cmdline():
     # parse the command line
     parser = argparse.ArgumentParser()
     parser.add_argument('--simplify', help='simplify the model before saving', action='store_true')
-    parser.add_argument('--bsize', help='batch size', type=int, default=1)
+    parser.add_argument('--cpu', help='force export for cpu', action='store_true')
+    parser.add_argument('--half', help='export as half float', action='store_true')
+    parser.add_argument('--batch', help='batch size', type=int, default=1)
     parser.add_argument('--resolution', help='the image resolution for the model: WIDTHxHEIGHT', type=str, default=None)
     parser.add_argument('--channels', help='number of input channels', type=int, default=3)
     # parser.add_argument('--classes', help='number of output classes', type=int, default=None)
@@ -107,19 +109,30 @@ def main():
     width, height = int(mo['width']), int(mo['height'])
     
     
-    print(f"  batch size: {args.bsize}")
+    print(f"  batch size: {args.batch}")
     print(f"  image size: {width}x{height}")
     print(f"num channels: {model.in_channels}")
     print(f" num classes: {model.out_classes}")
     
-    outpath = os.path.join(args.outdir, f'{args.model}-{args.bsize}x{model.in_channels}x{height}x{width}.onnx')
+    outbase = os.path.join(args.outdir, f'{args.model}-{args.batch}x{model.in_channels}x{height}x{width}')
+
+    if args.cpu == False and torch.cuda.is_available():
+        device = torch.device('cuda')
+        dtype = torch.float16 if args.half else torch.float32
+        outbase = f"{outbase}-cuda"
+        if args.half:
+            outbase = f"{outbase}-half"
+    else:
+        device = torch.device('cpu')
+        dtype = torch.float32
+    
+    if args.simplify:
+        outbase = f"{outbase}-simplified"
+    outpath = f"{outbase}.onnx"
     print(f"exporting to {outpath}", flush=True)
 
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    dtype = torch.float32
-    
     model.to(device=device, dtype=dtype)
-    inp = torch.rand((args.bsize, model.in_channels, height, width), device=device, dtype=dtype)
+    inp = torch.rand((args.batch, model.in_channels, height, width), device=device, dtype=dtype)
 
     run_export(outpath, model, inp, simplify=args.simplify)
 

@@ -11,7 +11,7 @@ from .data import dataset, imageloader
 
 camserver_re = re.compile("^(?P<protocol>.+?)://(?P<address>.+?)(:(?P<port>\d+))?$")
 
-def datasource(spec, *, resize=None, silent=True):
+def datasource(spec, *, resize=None, silent=True, repeats=1):
     
     mo = camserver_re.match(spec)
     
@@ -19,10 +19,10 @@ def datasource(spec, *, resize=None, silent=True):
     if mo is None:
         if os.path.isdir(spec) == False:
             raise ValueError(f"unable to interpret datasource spec: {spec}")
-        
-        pipe = dataset(spec)
+
+        pipe = dataset(spec, repeats=repeats)
         pipe = imageloader(pipe, resize=resize)
-            
+
         return pipe
     
     else:

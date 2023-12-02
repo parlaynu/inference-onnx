@@ -1,7 +1,6 @@
---extra-index-url https://download.pytorch.org/whl/cpu
 onnx
-onnxoptimizer
 onnxsim
-onnxruntime
+onnxruntime-gpu
+--extra-index-url https://download.pytorch.org/whl/cu118
 torch
 torchvision

@@ -2,6 +2,8 @@
 import argparse
 import time
 
+import numpy as np
+
 import inferlib.ops as ops
 import inferlib.ops.onnx as onnx_ops
 import inferlib.ops.classify as classify
@@ -13,6 +15,7 @@ def build_pipeline(session, dataspec, rate, limit):
     
     # get the shape of the input
     batch_size, nchans, height, width = session.get_inputs()[0].shape
+    dtype = np.float16 if 'float16' in session.get_inputs()[0].type else np.float32
     
     print(f"- input shape: {batch_size} {nchans} {height} {width}")
     print(f"- output shape: {session.get_outputs()[0].shape}")
@@ -25,7 +28,7 @@ def build_pipeline(session, dataspec, rate, limit):
     pipe = utils.worker(pipe)
 
     # pipe = imaging.resize(pipe, width=width, height=height)
-    pipe = classify.preprocess(pipe)
+    pipe = classify.preprocess(pipe, dtype=dtype)
     pipe = onnx_ops.classify(pipe, session=session)
     pipe = classify.postprocess(pipe)
     

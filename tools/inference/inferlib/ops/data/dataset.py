@@ -2,18 +2,19 @@ import os
 import os.path
 
 
-def dataset(imagedir):
+def dataset(imagedir, *, repeats=1):
 
-    for idx, image_path in enumerate(_scandir(imagedir)):
-        image_id = os.path.splitext(os.path.basename(image_path))[0]
-        item = {
-            'image_id': image_id,
-            'image_path': image_path,
-            'logs': [
-                f"{idx:04d} processing {image_id}"
-            ]
-        }
-        yield item
+    for _ in range(repeats):
+        for idx, image_path in enumerate(_scandir(imagedir)):
+            image_id = os.path.splitext(os.path.basename(image_path))[0]
+            item = {
+                'image_id': image_id,
+                'image_path': image_path,
+                'logs': [
+                    f"{idx:04d} processing {image_id}"
+                ]
+            }
+            yield item
 
 
 def _scandir(imagedir):
